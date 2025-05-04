@@ -104,7 +104,7 @@ void A_input(struct pkt packet)
     if (windowcount != 0) {
           int seqfirst = buffer[windowfirst].seqnum;
           int seqlast = buffer[windowlast].seqnum;
-          /* For SR, we need to find the exact packet this ACK corresponds to */
+          /* We need to find the exact packet this ACK corresponds to */
           for (i = 0; i < windowcount; i++) {
             int idx = (windowfirst + i) % WINDOWSIZE;
             
@@ -173,16 +173,19 @@ void A_timerinterrupt(void)
   if (TRACE > 0)
     printf("----A: time out,resend packets!\n");
 
-  for(i=0; i<windowcount; i++) {
-
-    if (TRACE > 0)
-      printf ("---A: resending packet %d\n", (buffer[(windowfirst+i) % WINDOWSIZE]).seqnum);
-
-    tolayer3(A,buffer[(windowfirst+i) % WINDOWSIZE]);
-    packets_resent++;
-    if (i==0) starttimer(A,RTT);
-  }
-}       
+  /* only retransmit the packet that timed out */
+  for (i = 0; i < windowcount; i++) {
+    int idx = (windowfirst + i) % WINDOWSIZE;
+    if (buffer[idx].seqnum == timer_seq && !acked[idx]) {
+        if (TRACE > 0)
+            printf("---A: resending packet %d\n", buffer[idx].seqnum);
+        tolayer3(A, buffer[idx]);
+        packets_resent++;
+        starttimer(A, RTT);
+        break;
+    }
+}
+} 
 
 
 
