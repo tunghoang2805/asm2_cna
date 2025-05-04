@@ -224,37 +224,40 @@ void B_input(struct pkt packet)
 {
   struct pkt sendpkt;
   int i;
+  int offset
 
-   /* if not corrupted */
+   /* Check if packet is corrupted */
    if (!IsCorrupted(packet)) {
-    /* Calculate the offset in our window */
-    int offset = (packet.seqnum - rcv_base + SEQSPACE) % SEQSPACE;
+    /* Always print this message and count all non-corrupted packets */
+    if (TRACE > 0)
+        printf("----B: packet %d is correctly received, send ACK!\n", packet.seqnum);
+    
+    /* Always increment packets_received for every non-corrupted packet */
+    packets_received++;
+    
+    /* Calculate offset in the receive window */
+    offset = (packet.seqnum - rcv_base + SEQSPACE) % SEQSPACE;
     
     if (offset < WINDOWSIZE) {
-        /* Packet is within our window */
-        if (TRACE > 0)
-            printf("----B: packet %d is correctly received, send ACK!\n", packet.seqnum);
-        
-        /* Store the packet in the buffer */
-        rcv_buffer[offset] = packet;
-        received[offset] = true;
-        
-        /* If it's the packet we're expecting (rcv_base), deliver it and any consecutive packets */
-        if (offset == 0) {
-            /* Deliver this packet and as many consecutive packets as possible */
-            while (received[0]) {
-                packets_received++;
-                tolayer5(B, rcv_buffer[0].payload);
-                
-                /* Slide window */
-                for (i = 0; i < WINDOWSIZE - 1; i++) {
-                    received[i] = received[i + 1];
-                    rcv_buffer[i] = rcv_buffer[i + 1];
+        /* Packet is within our window - buffer it if new */
+        if (!received[offset]) {
+            rcv_buffer[offset] = packet;
+            received[offset] = true;
+            
+            /* If we received packet at window base, deliver in-order packets */
+            if (offset == 0) {
+                while (received[0]) {
+                    tolayer5(B, rcv_buffer[0].payload);
+                    
+                    /* Slide window */
+                    for (i = 0; i < WINDOWSIZE - 1; i++) {
+                        received[i] = received[i + 1];
+                        rcv_buffer[i] = rcv_buffer[i + 1];
+                    }
+                    received[WINDOWSIZE - 1] = false;
+                    
+                    rcv_base = (rcv_base + 1) % SEQSPACE;
                 }
-                received[WINDOWSIZE - 1] = false;
-                
-                /* Advance rcv_base */
-                rcv_base = (rcv_base + 1) % SEQSPACE;
             }
         }
     }
