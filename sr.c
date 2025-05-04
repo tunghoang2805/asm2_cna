@@ -218,7 +218,6 @@ static int rcv_base;                     /* base sequence number of receiver win
 static bool received[WINDOWSIZE];        /* tracks which packets have been received */
 static struct pkt rcv_buffer[WINDOWSIZE]; /* buffer for out-of-order packets */
 
-
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet)
 {
@@ -264,24 +263,14 @@ void B_input(struct pkt packet)
     
     /* Send ACK for the received packet */
     sendpkt.acknum = packet.seqnum;
-} else {
-    /* packet is corrupted */
-    if (TRACE > 0)
-        printf("----B: packet corrupted, do not send ACK!\n");
-    return;
-}
-
-/* create packet */
-sendpkt.seqnum = B_nextseqnum;
-B_nextseqnum = (B_nextseqnum + 1) % 2;
-/* we don't have any data to send. fill payload with 0's */
-for (i = 0; i < 20; i++)
-    sendpkt.payload[i] = '0';
-/* computer checksum */
-sendpkt.checksum = ComputeChecksum(sendpkt);
-
-/* send out packet */
-tolayer3(B, sendpkt);
+/* If packet is corrupted, silently ignore it - no debug message */
+    sendpkt.seqnum = B_nextseqnum;
+    B_nextseqnum = (B_nextseqnum + 1) % 2;
+        for (i = 0; i < 20; i++)
+            sendpkt.payload[i] = '0';
+    sendpkt.checksum = ComputeChecksum(sendpkt);
+    tolayer3(B, sendpkt);
+    }
 }
 
 /* the following routine will be called once (only) before any other */
