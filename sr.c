@@ -285,8 +285,13 @@ tolayer3(B, sendpkt);
 /* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
-  expectedseqnum = 0;
-  B_nextseqnum = 1;
+  rcv_base = 0;
+    B_nextseqnum = 1;
+    
+    /* Initialize received array */
+    for (int i = 0; i < WINDOWSIZE; i++) {
+        received[i] = false;
+    }
 }
 
 /******************************************************************************
