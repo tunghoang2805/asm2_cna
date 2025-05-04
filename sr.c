@@ -213,8 +213,10 @@ void A_init(void)
 
 /********* Receiver (B)  variables and procedures ************/
 
-static int expectedseqnum; /* the sequence number expected next by the receiver */
-static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
+static int B_nextseqnum;                 /* the sequence number for the next packets sent by B */
+static int rcv_base;                     /* base sequence number of receiver window */
+static bool received[WINDOWSIZE];        /* tracks which packets have been received */
+static struct pkt rcv_buffer[WINDOWSIZE]; /* buffer for out-of-order packets */
 
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
