@@ -70,10 +70,10 @@ void A_output(struct msg message)
     tolayer3 (A, sendpkt);
 
     /* start timer if first packet in window */
-    if (windowcount == 1)
+    if (windowcount == 1) {
       starttimer(A,RTT);
       timer_seq = sendpkt.seqnum;
-
+    }
     /* get next sequence number, wrap back to 0 */
     A_nextseqnum = (A_nextseqnum + 1) % SEQSPACE;  
   }
@@ -223,7 +223,7 @@ void B_input(struct pkt packet)
 {
   struct pkt sendpkt;
   int i;
-  int offset
+  int offset;
 
    /* Check if packet is corrupted */
    if (!IsCorrupted(packet)) {
