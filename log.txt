@@ -1,0 +1,124 @@
+commit e4ea6d36b767895594dc5d17c784339afcd0e523
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 23:21:48 2025 +0930
+
+    remove unnecessary file
+
+commit 7f6ce0b9475ca9d8834aea45bb47b260d1813a0e
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 23:17:04 2025 +0930
+
+    fix: ignore corrupted packet without printing debug messages => No ACK is sent for corrupted packets
+
+commit 986e2ec9aa312f2c94fdd6b5d62a7d102205e5e3
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 23:06:32 2025 +0930
+
+    changes to B input after some test failed
+
+commit d7de9cf8d44ef6b0960385212f16b02d78dfe712
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:53:32 2025 +0930
+
+    modify sr.h:  identical to gbn.h because the function interfaces remain the same, only implementation change for SR
+
+commit 38a6c4eb3472dd83e654ab2a512fd129deabd704
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:52:14 2025 +0930
+
+    modify b init: initialize receiver buffer
+
+commit 7bdcd45bd652e96af6af63ac7bb2919871af2559
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:51:09 2025 +0930
+
+    modify B input:
+    - calculate how far the packet is from the base
+    - buffer the packet if it is not received yet
+    -  send ACK for  received packet, even if duplicated
+
+commit abfcda6240eb30ef942f5cabff9b49329b56800e
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:47:00 2025 +0930
+
+    init receiver B variables
+
+commit 7cc7e89c7c613930cac628c38d6529fd9bc16ec7
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:43:51 2025 +0930
+
+    modify A init: add acked array
+
+commit 29f7239672a0f1f1828f7733e1af6c7078079c8c
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:42:37 2025 +0930
+
+    modify A timer:
+    only retransmit the timed-out packet
+
+commit 71987a3faa3559a4206065f80749a1985261d0f0
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:40:51 2025 +0930
+
+    modify A input:
+    - check if ACK is for a packet in our window
+    - mark packet as ack
+    - check if this was the packet with the timer
+    - slide window and handle timer
+    - find the oldest unack packet
+
+commit 4a20a9a1489123060323a3f918db230a657f1003
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:29:40 2025 +0930
+
+    -adjust seq space
+    - add tracking array
+    - add sequence no of packet
+
+commit bc2aa97fed19b12e772efb16093086afcad2bfb8
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:21:30 2025 +0930
+
+    1st implementation did not compile properly. redo sr.c
+
+commit 9135d554807d85eb305a03c95777af99f959f7f6
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:17:37 2025 +0930
+
+    modify sr.h
+
+commit 6d42a282c7a640107018951e8b566c800b18c4b8
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:14:58 2025 +0930
+
+    modify receiver B:
+    - buffer packets within the receiver window
+    - send individual ACK for each received packet
+    - deliver packets and slide receiver window
+
+commit 1badc470f1872c82f57eb96fc017aae86fcddc3a
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:06:54 2025 +0930
+
+    modify sender A:
+    - track individual packet ACK using a buffer with ACK status
+    - retransmit unACKed packets on timeout
+    - slide sender window forward based on the un-ACK packet
+
+commit 7721f4c964903d87590ce211bec31912cc494ed5
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 22:01:50 2025 +0930
+
+    make changes to variables and function
+
+commit 6f4278526e8d07df09c2d029c84ea13fda09658b
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 16:37:50 2025 +0930
+
+    make copies of gbn.c to sr.c and gbn.h to sr.h
+
+commit bd3b4d3d3cb637f20b0bdbe1289886aab2d521ae
+Author: tunghoang2805 <141562039+tunghoang2805@users.noreply.github.com>
+Date:   Sun May 4 16:30:36 2025 +0930
+
+    Add assignment related files
