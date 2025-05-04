@@ -201,6 +201,12 @@ void A_init(void)
 		     so initially this is set to -1
 		   */
   windowcount = 0;
+  timer_seq = 0;
+    
+    /* Initialize the acked array */
+    for (int i = 0; i < WINDOWSIZE; i++) {
+        acked[i] = false;
+    }
 }
 
 
