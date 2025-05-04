@@ -1,65 +1,37 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 #include "emulator.h"
-#include "gbn.h"
+#include "sr.h"
 
-/* ******************************************************************
-   Go Back N protocol.  Adapted from J.F.Kurose
-   ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.2  
 
-   Network properties:
-   - one way network delay averages five time units (longer if there
-   are other messages in the channel for GBN), but can be larger
-   - packets can be corrupted (either the header or the data portion)
-   or lost, according to user-defined probabilities
-   - packets will be delivered in the order in which they were sent
-   (although some can be lost).
+#define RTT  16.0       
+#define WINDOWSIZE 6    
+#define SEQSPACE 8 // double the window size      
+#define NOTINUSE (-1)   
 
-   Modifications: 
-   - removed bidirectional GBN code and other code not used by prac. 
-   - fixed C style to adhere to current programming style
-   - added GBN implementation
-**********************************************************************/
 
-#define RTT  16.0       /* round trip time.  MUST BE SET TO 16.0 when submitting assignment */
-#define WINDOWSIZE 6    /* the maximum number of buffered unacked packet */
-#define SEQSPACE 7      /* the min sequence space for GBN must be at least windowsize + 1 */
-#define NOTINUSE (-1)   /* used to fill header fields that are not being used */
-
-/* generic procedure to compute the checksum of a packet.  Used by both sender and receiver  
-   the simulator will overwrite part of your packet with 'z's.  It will not overwrite your 
-   original checksum.  This procedure must generate a different checksum to the original if
-   the packet is corrupted.
-*/
 int ComputeChecksum(struct pkt packet)
 {
-  int checksum = 0;
-  int i;
-
-  checksum = packet.seqnum;
-  checksum += packet.acknum;
-  for ( i=0; i<20; i++ ) 
-    checksum += (int)(packet.payload[i]);
-
-  return checksum;
+  int checksum = packet.seqnum + packet.acknum;
+    for(int i=0; i<20; i++)
+        checksum += packet.payload[i];
+    return checksum;
 }
 
 bool IsCorrupted(struct pkt packet)
 {
-  if (packet.checksum == ComputeChecksum(packet))
-    return (false);
-  else
-    return (true);
+  return packet.checksum != ComputeChecksum(packet);
 }
 
 
 /********* Sender (A) variables and functions ************/
 
-static struct pkt buffer[WINDOWSIZE];  /* array for storing packets waiting for ACK */
-static int windowfirst, windowlast;    /* array indexes of the first/last packet awaiting ACK */
-static int windowcount;                /* the number of packets currently awaiting an ACK */
-static int A_nextseqnum;               /* the next sequence number to be used by the sender */
+static struct pkt buffer[WINDOWSIZE]; 
+static bool acked[WINDOWSIZE];  // Tracks ACK status
+static int window_base = 0;
+static int next_seq = 0;
+static int window_count = 0;
+           
 
 /* called from layer 5 (application layer), passed the message to be sent to other side */
 void A_output(struct msg message)
@@ -201,8 +173,9 @@ void A_init(void)
 
 /********* Receiver (B)  variables and procedures ************/
 
-static int expectedseqnum; /* the sequence number expected next by the receiver */
-static int B_nextseqnum;   /* the sequence number for the next packets sent by B */
+static struct pkt recv_window[WINDOWSIZE];
+static bool received[WINDOWSIZE] = {false};
+static int expected_seq = 0;  
 
 
 /* called from layer 3, when a packet arrives for layer 4 at B*/
