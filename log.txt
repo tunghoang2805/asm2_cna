@@ -1,3 +1,15 @@
+commit 0c542825036a88b8de4fc25dcf9eb876e5874c8c
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 23:32:55 2025 +0930
+
+    fix syntax errors: missing {} and ;
+
+commit de544dc583f101d48d85d41ffb070c218f9435c4
+Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
+Date:   Sun May 4 23:24:34 2025 +0930
+
+    added commit log
+
 commit e4ea6d36b767895594dc5d17c784339afcd0e523
 Author: Tung Hoang <thanhtung.hoang@adelaide.edu.au>
 Date:   Sun May 4 23:21:48 2025 +0930
