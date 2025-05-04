@@ -103,6 +103,7 @@ void A_init(void)
 /********* Receiver (B)  variables and procedures ************/
 
 static struct pkt recv_window[WINDOWSIZE];
+// Added receive window buffer
 static bool received[WINDOWSIZE] = {false};
 static int expected_seq = 0;  
 
@@ -110,68 +111,37 @@ static int expected_seq = 0;
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 void B_input(struct pkt packet)
 {
-  struct pkt sendpkt;
-  int i;
-
-  /* if not corrupted and received packet is in order */
-  if  ( (!IsCorrupted(packet))  && (packet.seqnum == expectedseqnum) ) {
-    if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
-    packets_received++;
-
-    /* deliver to receiving application */
-    tolayer5(B, packet.payload);
-
-    /* send an ACK for the received packet */
-    sendpkt.acknum = expectedseqnum;
-
-    /* update state variables */
-    expectedseqnum = (expectedseqnum + 1) % SEQSPACE;        
-  }
-  else {
-    /* packet is corrupted or out of order resend last ACK */
-    if (TRACE > 0) 
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
-    if (expectedseqnum == 0)
-      sendpkt.acknum = SEQSPACE - 1;
-    else
-      sendpkt.acknum = expectedseqnum - 1;
-  }
-
-  /* create packet */
-  sendpkt.seqnum = B_nextseqnum;
-  B_nextseqnum = (B_nextseqnum + 1) % 2;
+  if(!IsCorrupted(packet)) {
+    int seq = packet.seqnum;
+    struct pkt ack_pkt;
     
-  /* we don't have any data to send.  fill payload with 0's */
-  for ( i=0; i<20 ; i++ ) 
-    sendpkt.payload[i] = '0';  
+    // Send ACK for this packet
+    ack_pkt.acknum = seq;
+    ack_pkt.checksum = ComputeChecksum(ack_pkt);
+    tolayer3(B, ack_pkt);
 
-  /* computer checksum */
-  sendpkt.checksum = ComputeChecksum(sendpkt); 
-
-  /* send out packet */
-  tolayer3 (B, sendpkt);
+    // Out-of-order packet handling
+    if(seq >= expected_seq && seq < (expected_seq + WINDOWSIZE) % SEQSPACE) {
+        int index = seq % WINDOWSIZE;
+        if(!received[index]) {
+            recv_window[index] = packet;
+            received[index] = true;
+            
+            // Deliver in-order packets
+            while(received[expected_seq % WINDOWSIZE]) {
+                tolayer5(B, recv_window[expected_seq % WINDOWSIZE].payload);
+                received[expected_seq % WINDOWSIZE] = false;
+                expected_seq = (expected_seq + 1) % SEQSPACE;
+            }
+        }
+    }
+}
 }
 
-/* the following routine will be called once (only) before any other */
-/* entity B routines are called. You can use it to do any initialization */
 void B_init(void)
 {
-  expectedseqnum = 0;
-  B_nextseqnum = 1;
-}
-
-/******************************************************************************
- * The following functions need be completed only for bi-directional messages *
- *****************************************************************************/
-
-/* Note that with simplex transfer from a-to-B, there is no B_output() */
-void B_output(struct msg message)  
-{
-}
-
-/* called when B's timer goes off */
-void B_timerinterrupt(void)
-{
+  expected_seq = 0;
+    for(int i=0; i<WINDOWSIZE; i++)
+        received[i] = false;
 }
 
