@@ -225,44 +225,60 @@ void B_input(struct pkt packet)
   struct pkt sendpkt;
   int i;
 
-  /* if not corrupted and received packet is in order */
-  if  ( (!IsCorrupted(packet))  && (packet.seqnum == expectedseqnum) ) {
-    if (TRACE > 0)
-      printf("----B: packet %d is correctly received, send ACK!\n",packet.seqnum);
-    packets_received++;
-
-    /* deliver to receiving application */
-    tolayer5(B, packet.payload);
-
-    /* send an ACK for the received packet */
-    sendpkt.acknum = expectedseqnum;
-
-    /* update state variables */
-    expectedseqnum = (expectedseqnum + 1) % SEQSPACE;        
-  }
-  else {
-    /* packet is corrupted or out of order resend last ACK */
-    if (TRACE > 0) 
-      printf("----B: packet corrupted or not expected sequence number, resend ACK!\n");
-    if (expectedseqnum == 0)
-      sendpkt.acknum = SEQSPACE - 1;
-    else
-      sendpkt.acknum = expectedseqnum - 1;
-  }
-
-  /* create packet */
-  sendpkt.seqnum = B_nextseqnum;
-  B_nextseqnum = (B_nextseqnum + 1) % 2;
+   /* if not corrupted */
+   if (!IsCorrupted(packet)) {
+    /* Calculate the offset in our window */
+    int offset = (packet.seqnum - rcv_base + SEQSPACE) % SEQSPACE;
     
-  /* we don't have any data to send.  fill payload with 0's */
-  for ( i=0; i<20 ; i++ ) 
-    sendpkt.payload[i] = '0';  
+    if (offset < WINDOWSIZE) {
+        /* Packet is within our window */
+        if (TRACE > 0)
+            printf("----B: packet %d is correctly received, send ACK!\n", packet.seqnum);
+        
+        /* Store the packet in the buffer */
+        rcv_buffer[offset] = packet;
+        received[offset] = true;
+        
+        /* If it's the packet we're expecting (rcv_base), deliver it and any consecutive packets */
+        if (offset == 0) {
+            /* Deliver this packet and as many consecutive packets as possible */
+            while (received[0]) {
+                packets_received++;
+                tolayer5(B, rcv_buffer[0].payload);
+                
+                /* Slide window */
+                for (i = 0; i < WINDOWSIZE - 1; i++) {
+                    received[i] = received[i + 1];
+                    rcv_buffer[i] = rcv_buffer[i + 1];
+                }
+                received[WINDOWSIZE - 1] = false;
+                
+                /* Advance rcv_base */
+                rcv_base = (rcv_base + 1) % SEQSPACE;
+            }
+        }
+    }
+    
+    /* Send ACK for the received packet */
+    sendpkt.acknum = packet.seqnum;
+} else {
+    /* packet is corrupted */
+    if (TRACE > 0)
+        printf("----B: packet corrupted, do not send ACK!\n");
+    return;
+}
 
-  /* computer checksum */
-  sendpkt.checksum = ComputeChecksum(sendpkt); 
+/* create packet */
+sendpkt.seqnum = B_nextseqnum;
+B_nextseqnum = (B_nextseqnum + 1) % 2;
+/* we don't have any data to send. fill payload with 0's */
+for (i = 0; i < 20; i++)
+    sendpkt.payload[i] = '0';
+/* computer checksum */
+sendpkt.checksum = ComputeChecksum(sendpkt);
 
-  /* send out packet */
-  tolayer3 (B, sendpkt);
+/* send out packet */
+tolayer3(B, sendpkt);
 }
 
 /* the following routine will be called once (only) before any other */
